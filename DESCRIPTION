@@ -17,7 +17,8 @@ Description: chromTFR quantifies transcription factor footprints in
     scores per sample and motif, draws the underlying footprints and
     summarises the deviations as a heatmap.
 License: MIT + file LICENSE
-URL: https://github.com/EpigenomeInformatics/chromTFR
+URL: https://github.com/EpigenomeInformatics/chromTFR,
+    https://epigenomeinformatics.github.io/chromTFR/
 BugReports: https://github.com/EpigenomeInformatics/chromTFR/issues
 Depends: 
     data.table (>= 1.14.0),

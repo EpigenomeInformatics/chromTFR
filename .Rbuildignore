@@ -4,3 +4,6 @@
 ^\.git$
 ^README\.Rmd$
 ^CITATION\.cff$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

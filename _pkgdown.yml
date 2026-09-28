@@ -1,0 +1,54 @@
+url: https://epigenomeinformatics.github.io/chromTFR/
+
+template:
+  bootstrap: 5
+
+reference:
+- title: Datasets and insertion sites
+  desc: Reading a ChrAccR dataset and turning fragments into Tn5 cuts.
+  contents:
+  - loadAccDataset
+  - getAccSamples
+  - getAccSampleAnnotation
+  - getAccRegions
+  - getTn5Insertions
+  - mergeInsertionSites
+  - makeInsertionReader
+
+- title: Profiles and deviation scores
+  desc: Footprint profiles, the GC expected model and the deviation score.
+  contents:
+  - prepareTFBS
+  - accProfile
+  - accDeviationScore
+  - accDeviation
+  - addGCBintoAccessome
+  - computeAccExpectations
+  - computeAccDeviation
+  - computeRowZScore
+  - runChromTFR
+
+- title: Tn5 k-mer bias
+  desc: The sequence based expected model.
+  contents:
+  - kmerBackground
+  - computeKmerBias
+  - kmerBiasProfile
+  - kmerIndexProfile
+  - profileFromBias
+  - scaleToFlank
+
+- title: Footprint figures
+  contents:
+  - accFootprintData
+  - accRawPanel
+  - accDiffPanel
+  - plotAccFootprintGrid
+  - plotExpectedAccFootprint
+  - plotAccMotifFootprint
+
+- title: Deviation heatmap
+  contents:
+  - accObservedMatrix
+  - accExpectedMatrix
+  - plotAccDeviationHeatmap
