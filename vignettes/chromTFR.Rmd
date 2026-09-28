@@ -1,0 +1,90 @@
+---
+title: "Transcription factor footprints in chromatin accessibility data"
+author: "Irem B. Gunduz"
+package: chromTFR
+output:
+  BiocStyle::html_document:
+    toc_float: true
+vignette: >
+  %\VignetteIndexEntry{chromTFR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+# Introduction
+
+`chromTFR` is the chromatin accessibility counterpart of `methylTFR`. It
+uses the same annotation, but methylation levels are replaced by Tn5
+insertion densities: for every binding site of a motif the insertions are
+counted per base, the sites are stacked on their centre and the average
+gives the footprint. A protein bound to the motif shields the DNA from
+Tn5, so the profile dips in the centre and rises on the flanks.
+
+The deviation score is that shape as one number, the insertion density of
+the central window over the density of the outer flanks, corrected by the
+same ratio computed on an expected profile.
+
+# The expected profile
+
+Two models are available.
+
+The GC model follows `methylTFR`: the genome wide insertion density is
+summarised per GC bin with `addGCBintoAccessome()` and combined with the
+GC bin composition of the binding sites by `computeAccExpectations()`.
+
+The k-mer model captures the sequence preference of Tn5 directly.
+`computeKmerBias()` counts the k-mer centred on every observed cut and
+compares it with the frequency of that k-mer in the accessible genome,
+and `kmerBiasProfile()` averages those weights along the binding sites.
+The motif is a fixed string of letters at the centre of every window, so
+this term matters: for an AT-rich motif Tn5 cuts less in the centre for
+chemical reasons alone, which looks like protection.
+
+# A minimal workflow
+
+```{r workflow, eval = FALSE}
+library(chromTFR)
+
+dsa <- loadAccDataset("dsATAC_filtered")
+peaks <- getAccRegions(dsa, regionType = ".peaks.cons", extend = 500)
+ins <- getInsertionSites(dsa, getAccSamples(dsa)[1], regions = peaks)
+
+tfbs <- prepareTFBS(tf_bindsites[["CTCF"]])
+profile <- accProfile(ins, tfbs)
+accDeviationScore(profile)
+```
+
+`runChromTFR()` runs the GC based workflow over every sample and motif
+and returns a `SummarizedExperiment` with the deviations, their row-wise
+z-scores and the expected deviations.
+
+# Figures
+
+`accFootprintData()` builds the observed and expected curves of one motif
+for a named list of samples or group aggregates, and
+`plotAccFootprintGrid()` draws them as two rows, the profiles on top and
+the corrected curves below, each labelled with its deviation score.
+
+For a per sample overview, `accObservedMatrix()` and
+`accExpectedMatrix()` give the two halves of the deviation matrix and
+`plotAccDeviationHeatmap()` draws the row-wise z-scores. Fit the Tn5
+model per sample there: with one shared model the expected term is
+constant per motif and cancels out of a row-wise z-score.
+
+# Analysis scripts
+
+The scripts used for the malaria cohorts are installed with the package.
+
+```{r scripts, eval = FALSE}
+list.files(system.file("scripts", package = "chromTFR"))
+```
+
+# Session info
+
+```{r session}
+sessionInfo()
+```

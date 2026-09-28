@@ -1,0 +1,55 @@
+Package: chromTFR
+Title: Quantification of Chromatin Accessibility Signatures in TFBS
+Version: 0.99.0
+Date: 2026-09-28
+Authors@R: 
+    person("Irem B.", "Gunduz", , "irembgunduz@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-2641-0916"))
+Description: chromTFR quantifies transcription factor footprints in
+    chromatin accessibility data using the annotation of the methylTFR
+    package. Tn5 insertion densities replace methylation levels, and the
+    expected profile of a motif is derived either from the GC bin
+    composition of its binding sites or from a k-mer model of the Tn5
+    sequence preference. The package computes bias corrected deviation
+    scores per sample and motif, draws the underlying footprints and
+    summarises the deviations as a heatmap.
+License: MIT + file LICENSE
+URL: https://github.com/EpigenomeInformatics/chromTFR
+BugReports: https://github.com/EpigenomeInformatics/chromTFR/issues
+Depends: 
+    data.table (>= 1.14.0),
+    R (>= 4.3.0),
+    SummarizedExperiment
+Imports: 
+    BiocParallel,
+    Biostrings,
+    circlize,
+    ComplexHeatmap,
+    GenomicRanges,
+    ggplot2,
+    grid,
+    IRanges,
+    logger,
+    matrixStats,
+    methods,
+    patchwork,
+    S4Vectors,
+    stats,
+    utils
+Suggests: 
+    BiocStyle,
+    BSgenome.Hsapiens.UCSC.hg38,
+    ChrAccR,
+    knitr,
+    methylTFRAnnotationHg38,
+    rmarkdown,
+    sessioninfo,
+    testthat (>= 3.0.0)
+VignetteBuilder: 
+    knitr
+biocViews: Software, ATACSeq, Epigenetics, GeneRegulation, Transcription,
+    MotifAnnotation, Sequencing, Coverage, ChIPSeq
+Config/testthat/edition: 3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
