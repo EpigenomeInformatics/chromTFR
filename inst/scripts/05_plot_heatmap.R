@@ -18,13 +18,14 @@ suppressPackageStartupMessages({
   library(chromTFR)
 })
 
-ins.dir <- file.path("/scratch/icbb/igunduz/chromTFR", "insertions")
-fig.dir <- file.path("/scratch/icbb/igunduz/chromTFR", "atac")
+ins.dir <- "chromTFR/insertions"
+fig.dir <- "chromTFR/figures"
+if (!dir.exists(fig.dir)) dir.create(fig.dir, recursive = TRUE)
 
 motifSet <- "altius"
-motifs <- c("ap1_1", "ets_2", "ewsr1_fli1", "tead")
-GRP <- "region"
-ann.cols <- c("parasiteStatus", "pastYearInfections", "region")
+motifs <- c("ap1_1", "ctcf", "irf_3")
+GRP <- "group"
+ann.cols <- c("group")
 
 kmer <- 6L
 max.ins <- 1e6

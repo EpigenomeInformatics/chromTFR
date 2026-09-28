@@ -77,7 +77,9 @@ constant per motif and cancels out of a row-wise z-score.
 
 # Analysis scripts
 
-The scripts used for the malaria cohorts are installed with the package.
+Template scripts for the whole workflow are installed with the
+package. Copy one, set the paths and the grouping column at the top,
+and run it.
 
 ```{r scripts, eval = FALSE}
 list.files(system.file("scripts", package = "chromTFR"))

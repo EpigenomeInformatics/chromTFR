@@ -41,5 +41,5 @@ citation("chromTFR")
 ```
 
 See the vignette for the full workflow, and
-`system.file("scripts", package = "chromTFR")` for the analysis scripts
-of the malaria cohorts.
+`system.file("scripts", package = "chromTFR")` for template scripts
+covering the steps from a dataset to the figures.

@@ -3,6 +3,7 @@
 #####################################################################
 # 01_prep_insertions.R
 # Insertion sites per sample and per group of a ChrAccR dataset.
+# Set the paths and the grouping column below before running.
 #####################################################################
 
 suppressPackageStartupMessages({
@@ -13,8 +14,8 @@ suppressPackageStartupMessages({
   library(chromTFR)
 })
 
-dsa.dir <- "/icbb/projects/mmaran/malaria/pilot/longPeaksYear0.5/"
-out.dir <- file.path("/scratch/icbb/igunduz/chromTFR", "insertions")
+dsa.dir <- "path/to/dsATAC_dataset"
+out.dir <- "chromTFR/insertions"
 if (!dir.exists(out.dir)) dir.create(out.dir, recursive = TRUE)
 
 region.type <- ".peaks.cons"
@@ -22,9 +23,9 @@ region.extend <- 500L
 # Set to c(0L, 0L) if the fragments are already Tn5 shifted
 tn5.shift <- c(4L, -5L)
 
-GRP <- "region"
-GRP1 <- "Tororo"
-GRP2 <- "Jinja"
+GRP <- "group"
+GRP1 <- "groupA"
+GRP2 <- "groupB"
 
 dsa <- loadAccDataset(dsa.dir)
 samples <- getAccSamples(dsa)

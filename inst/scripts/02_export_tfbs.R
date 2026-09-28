@@ -3,7 +3,7 @@
 #####################################################################
 # 02_export_tfbs.R
 # Binding sites of the selected motifs, resized to the footprint window
-# and restricted to the distal regions.
+# and optionally restricted to a region set.
 #####################################################################
 
 suppressPackageStartupMessages({
@@ -15,16 +15,15 @@ suppressPackageStartupMessages({
 })
 
 args <- commandArgs(trailingOnly = TRUE)
-motifSet <- if (length(args) > 0) args[1] else "jaspar2020_distal"
-tfSet <- "jaspar2020"
-motifs <- c("IRF1", "IRF2", "IRF5", "FOS::JUN", "BATF::JUN")
+motifSet <- if (length(args) > 0) args[1] else "jaspar2020"
+# The distal set shares its binding sites with the genome wide one
+tfSet <- sub("_distal$", "", motifSet)
+motifs <- c("CTCF", "FOS::JUN", "IRF1")
 
-out.dir <- file.path("/scratch/icbb/igunduz/chromTFR", "tfbs")
+out.dir <- "chromTFR/tfbs"
 if (!dir.exists(out.dir)) dir.create(out.dir, recursive = TRUE)
-distal.file <- file.path(
-  "/scratch/icbb/igunduz/methylTFR_manuscript/github",
-  "methylTFRAnnotationHg38_old/inst/extdata/distal_regions.RDS"
-)
+# Only needed for a distal motif set
+distal.file <- "path/to/distal_regions.RDS"
 
 log_info("Motif set: ", motifSet)
 out.file <- file.path(out.dir, paste0("tfbs_", motifSet, ".RDS"))
@@ -41,7 +40,7 @@ if (length(absent) > 0) {
 if (length(motifs) == 0) stop("None of the motifs are in the annotation")
 
 enhancer <- NULL
-if (motifSet == "jaspar2020_distal") {
+if (grepl("_distal$", motifSet)) {
   if (!file.exists(distal.file)) {
     stop("Distal regions file does not exist: ", distal.file)
   }

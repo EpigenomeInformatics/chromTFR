@@ -16,27 +16,25 @@ suppressPackageStartupMessages({
   library(chromTFR)
 })
 
-motifSet <- "jaspar2020_distal"
-tfSet <- "jaspar2020"
-motifs <- c("IRF1", "IRF2", "IRF5", "FOS::JUN", "BATF::JUN")
+motifSet <- "jaspar2020"
+tfSet <- sub("_distal$", "", motifSet)
+motifs <- c("CTCF", "FOS::JUN", "IRF1")
 expected.model <- "kmer"
 
-GRP1 <- "Tororo"
-GRP2 <- "Jinja"
-group_colors <- c("Tororo" = "#B23A48", "Jinja" = "#3B6EA5")
+GRP1 <- "groupA"
+GRP2 <- "groupB"
+group_colors <- c("groupA" = "#B23A48", "groupB" = "#3B6EA5")
 
 plot.window <- 200L
 flank.norm <- 30L
 smooth.window <- 5L
 
-ins.dir <- file.path("/scratch/icbb/igunduz/chromTFR", "insertions")
-tfbs.dir <- file.path("/scratch/icbb/igunduz/chromTFR", "tfbs")
-fig.dir <- file.path("/scratch/icbb/igunduz/chromTFR", "atac")
+ins.dir <- "chromTFR/insertions"
+tfbs.dir <- "chromTFR/tfbs"
+fig.dir <- "chromTFR/figures"
 if (!dir.exists(fig.dir)) dir.create(fig.dir, recursive = TRUE)
-distal.file <- file.path(
-  "/scratch/icbb/igunduz/methylTFR_manuscript/github",
-  "methylTFRAnnotationHg38_old/inst/extdata/distal_regions.RDS"
-)
+# Only needed for a distal motif set
+distal.file <- "path/to/distal_regions.RDS"
 
 manifest <- fread(file.path(ins.dir, "group_manifest.tsv"))
 manifest <- manifest[group %in% c(GRP1, GRP2)]
@@ -58,11 +56,7 @@ if (expected.model == "kmer") {
   gcfreqs <- getGCfreq(motifSet = motifSet)
   gc_dist <- getGenomeGC()
   motifs <- intersect(motifs, intersect(names(tf_bindsites), names(gcfreqs)))
-  enhancer <- if (motifSet == "jaspar2020_distal") {
-    readRDS(distal.file)
-  } else {
-    NULL
-  }
+  enhancer <- if (grepl("_distal$", motifSet)) readRDS(distal.file) else NULL
   if (!is.null(enhancer)) {
     gc_dist <- IRanges::subsetByOverlaps(gc_dist, enhancer)
   }

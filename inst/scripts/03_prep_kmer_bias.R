@@ -15,10 +15,10 @@ suppressPackageStartupMessages({
 })
 
 args <- commandArgs(trailingOnly = TRUE)
-motifSet <- if (length(args) > 0) args[1] else "jaspar2020_distal"
+motifSet <- if (length(args) > 0) args[1] else "jaspar2020"
 
-ins.dir <- file.path("/scratch/icbb/igunduz/chromTFR", "insertions")
-tfbs.dir <- file.path("/scratch/icbb/igunduz/chromTFR", "tfbs")
+ins.dir <- "chromTFR/insertions"
+tfbs.dir <- "chromTFR/tfbs"
 genome <- BSgenome.Hsapiens.UCSC.hg38
 kmer <- 6L
 max.ins <- 2e6

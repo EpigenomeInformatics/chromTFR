@@ -1,10 +1,10 @@
 #!/usr/bin/env Rscript
 
 #####################################################################
-# run_footprints_vd2.R
-# One script for the vd2 year 0.5 dataset: insertions, group
-# aggregates, Tn5 k-mer bias and the footprints of the Altius
-# archetypes, low against high aEIR. Every step caches.
+# run_all.R
+# Insertions, group aggregates, Tn5 k-mer bias and the footprints in
+# one script. Every step caches, so a second run only redoes what is
+# missing. Set the paths and the grouping column below.
 #####################################################################
 
 suppressPackageStartupMessages({
@@ -20,35 +20,27 @@ suppressPackageStartupMessages({
   library(chromTFR)
 })
 
-dsa.dir <- paste0(
-  "/icbb/projects/mmaran/malaria/dsATAC/longSaturationAnalysis/",
-  "vd2.year0.5/data/dsATAC_filtered"
-)
-out.dir <- file.path("/scratch/icbb/igunduz/chromTFR", "vd2_year0.5")
-fig.dir <- file.path("/scratch/icbb/igunduz/chromTFR", "atac")
+dsa.dir <- "path/to/dsATAC_dataset"
+out.dir <- "chromTFR/insertions"
+fig.dir <- "chromTFR/figures"
 for (d in c(out.dir, fig.dir)) {
   if (!dir.exists(d)) dir.create(d, recursive = TRUE)
 }
 
 motifSet <- "altius"
-motifs <- c("ap1_1", "ets_2", "ewsr1_fli1", "tead")
+motifs <- c("ap1_1", "ctcf", "irf_3")
 
-# Responders, marked in red in the chromVAR heatmap
-keep.samples <- c(
-  "VD2_2016_d3340_88", "VD2_2016_d3381_164", "VD2_2016_d3401_216",
-  "VD2_2016_d3278_60", "VD2_2016_d3280_168", "VD2_2016_d3369_112",
-  "VD2_2013_d3278_52", "VD2_2013_d3340_80", "VD2_2014_d3381_160",
-  "VD2_2013_d3401_208", "VD2_2013_d3280_44", "VD2_2013_d3369_104",
-  "VD2_2014_d3369_108", "VD2_2014_d3398_200"
-)
+# Restrict the analysis to a subset of the samples, or NULL for all
+keep.samples <- NULL
 
-GRP <- "EirGrp"
-GRP1 <- "low"
-GRP2 <- "high"
-group_colors <- c("low" = "#3B6EA5", "high" = "#B23A48")
+GRP <- "group"
+GRP1 <- "groupA"
+GRP2 <- "groupB"
+group_colors <- c("groupA" = "#B23A48", "groupB" = "#3B6EA5")
 
 region.type <- ".peaks.cons"
 region.extend <- 500L
+# Set to c(0L, 0L) if the fragments are already Tn5 shifted
 tn5.shift <- c(4L, -5L)
 
 kmer <- 6L
@@ -68,13 +60,17 @@ dsa <- loadAccDataset(dsa.dir)
 samples <- getAccSamples(dsa)
 ann <- getAccSampleAnnotation(dsa)
 
-absent.samples <- setdiff(keep.samples, samples)
-if (length(absent.samples) > 0) {
-  stop("Samples not in the dataset: ", paste(absent.samples, collapse = ", "))
+if (!is.null(keep.samples)) {
+  absent.samples <- setdiff(keep.samples, samples)
+  if (length(absent.samples) > 0) {
+    stop("Samples not in the dataset: ",
+      paste(absent.samples, collapse = ", ")
+    )
+  }
+  idx <- match(keep.samples, samples)
+  samples <- samples[idx]
+  ann <- ann[idx, , drop = FALSE]
 }
-idx <- match(keep.samples, samples)
-samples <- samples[idx]
-ann <- ann[idx, , drop = FALSE]
 
 if (!GRP %in% colnames(ann)) {
   stop("Column '", GRP, "' not found, available: ",
@@ -193,7 +189,7 @@ p <- plotAccFootprintGrid(profiles, tfbs, group_colors,
   method = "division", flankNorm = flank.norm, plotWindow = plot.window,
   corrected = "k-mer corrected"
 )
-file <- file.path(fig.dir, paste0("vd2_", motifSet, "_aEIR_footprints.pdf"))
+file <- file.path(fig.dir, paste0(motifSet, "_footprints.pdf"))
 ggsave(file, p, width = 6 * length(profiles), height = 9,
   bg = "transparent"
 )
