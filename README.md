@@ -34,18 +34,6 @@ ins <- getTn5Insertions(dsa, getAccSamples(dsa)[1], regions = peaks)
 accDeviationScore(accProfile(ins, prepareTFBS(tf_bindsites[["CTCF"]])))
 ```
 
-## Note on chromVAR
-
-The deviation score here is a footprint depth: the insertion density of
-the central window over the density of the outer flanks. chromVAR
-measures a different quantity, the accessibility of the peaks that carry
-a motif, which corresponds to the flanking accessibility rather than to
-the depth of the footprint. The two are separate axes of the same
-picture (Baek et al. 2017; Corces et al. 2018, Fig. 4), so a motif can
-move in one and not in the other. A heatmap of these scores is not
-expected to reproduce a chromVAR heatmap, and the sign is opposite: a
-deeper footprint, meaning more protection, gives a lower score.
-
 ## Citation
 
 ```r

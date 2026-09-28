@@ -38,6 +38,9 @@ library(ggplot2)
 
 dsa <- ChrAccRex::loadExample("dsAtac_ia_example")
 ann <- getAccSampleAnnotation(dsa)
+# The annotation is in the order of the samples, but its sampleId column
+# lists the merged replicates, so take the ids from the object itself
+ann$sample <- getAccSamples(dsa)
 table(ann$cellType)
 ChrAccR::getRegionTypes(dsa)
 ```
@@ -52,7 +55,12 @@ picked <- do.call(rbind, lapply(groups, function(g) {
     rows <- ann[ann$cellType == g & ann$stimulus == "U", , drop = FALSE]
     head(rows, 3)
 }))
-picked$sampleId
+if (!all(groups %in% picked$cellType)) {
+    stop("No unstimulated samples for: ",
+        paste(setdiff(groups, picked$cellType), collapse = ", ")
+    )
+}
+picked$sample
 ```
 
 # Insertion sites
@@ -67,7 +75,7 @@ peaks <- getAccRegions(dsa, regionType = "IA_prog_peaks", extend = 500)
 
 cache <- tempfile("chromTFR_example")
 dir.create(cache)
-files <- vapply(picked$sampleId, function(s) {
+files <- vapply(picked$sample, function(s) {
     f <- file.path(cache, paste0("ins_", s, ".RDS"))
     saveRDS(getTn5Insertions(dsa, s, regions = peaks), f)
     f
