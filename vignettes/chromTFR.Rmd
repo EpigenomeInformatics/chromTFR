@@ -51,7 +51,7 @@ library(chromTFR)
 
 dsa <- loadAccDataset("dsATAC_filtered")
 peaks <- getAccRegions(dsa, regionType = ".peaks.cons", extend = 500)
-ins <- getInsertionSites(dsa, getAccSamples(dsa)[1], regions = peaks)
+ins <- getTn5Insertions(dsa, getAccSamples(dsa)[1], regions = peaks)
 
 tfbs <- prepareTFBS(tf_bindsites[["CTCF"]])
 profile <- accProfile(ins, tfbs)

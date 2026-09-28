@@ -1,0 +1,198 @@
+---
+title: "A worked example with the ChrAccR example data"
+author: "Irem B. Gunduz"
+package: chromTFR
+output:
+  BiocStyle::html_document:
+    toc_float: true
+vignette: >
+  %\VignetteIndexEntry{A worked example with the ChrAccR example data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+haveData <- all(vapply(
+    c("ChrAccR", "ChrAccRex", "methylTFRAnnotationHg38"),
+    requireNamespace, logical(1), quietly = TRUE
+))
+knitr::opts_chunk$set(eval = haveData)
+```
+
+# The data
+
+`ChrAccRex` ships an ATAC-seq example dataset of sorted immune cells,
+aligned to hg38 and stored as a `DsATAC` object with fragment level
+data. That is what `chromTFR` needs: footprints are built from single
+base Tn5 cut positions, which only fragments provide.
+
+```{r install, eval = FALSE}
+remotes::install_github("EpigenomeInformatics/ChrAccRex")
+```
+
+```{r load}
+library(chromTFR)
+library(data.table)
+library(ggplot2)
+
+dsa <- ChrAccRex::loadExample("dsAtac_ia_example")
+ann <- getAccSampleAnnotation(dsa)
+table(ann$cellType)
+ChrAccR::getRegionTypes(dsa)
+```
+
+This vignette compares naive against effector memory CD8 T cells, using
+three unstimulated samples of each. Restricting to a handful of samples
+keeps the build short; a real run would use all of them.
+
+```{r groups}
+groups <- c("TCD8naive", "TCD8EM")
+picked <- do.call(rbind, lapply(groups, function(g) {
+    rows <- ann[ann$cellType == g & ann$stimulus == "U", , drop = FALSE]
+    head(rows, 3)
+}))
+picked$sampleId
+```
+
+# Insertion sites
+
+The peaks of the example dataset are extended so that they still cover
+the flanks of a motif window, and the insertions are counted per base
+inside them. Scores are insertions per million, so samples of different
+depth stay comparable.
+
+```{r insertions}
+peaks <- getAccRegions(dsa, regionType = "IA_prog_peaks", extend = 500)
+
+cache <- tempfile("chromTFR_example")
+dir.create(cache)
+files <- vapply(picked$sampleId, function(s) {
+    f <- file.path(cache, paste0("ins_", s, ".RDS"))
+    saveRDS(getTn5Insertions(dsa, s, regions = peaks), f)
+    f
+}, character(1))
+```
+
+`mergeInsertionSites()` pools the samples of a group into one aggregate,
+averaging the scores so that groups of unequal size stay on the same
+scale.
+
+```{r aggregate}
+ins <- lapply(groups, function(g) {
+    mergeInsertionSites(files[picked$cellType == g])
+})
+names(ins) <- groups
+ins[["TCD8naive"]]
+```
+
+# Footprints
+
+The annotation comes from `methylTFRAnnotationHg38`, unchanged from
+`methylTFR`. `prepareTFBS()` resizes the binding sites to the footprint
+window; everything downstream works on that object.
+
+```{r annotation}
+motifs <- c("CTCF", "FOS::JUN")
+tf_bindsites <- methylTFRAnnotationHg38::getTFbindsites(
+    motifSet = "jaspar2020"
+)
+gcfreqs <- methylTFRAnnotationHg38::getGCfreq(motifSet = "jaspar2020")
+gc_dist <- methylTFRAnnotationHg38::getGenomeGC()
+
+tfbs <- lapply(motifs, function(m) prepareTFBS(tf_bindsites[[m]]))
+names(tfbs) <- motifs
+lengths(tfbs)
+```
+
+The expected profile is the GC model here: the insertion density of the
+sample summarised per GC bin, combined with the GC composition of the
+binding sites.
+
+```{r expected}
+binIns <- lapply(ins, addGCBintoAccessome, gcdist = gc_dist)
+expected <- lapply(groups, function(g) {
+    prof <- lapply(motifs, function(m) {
+        computeAccExpectations(binIns[[g]], gcfreqs[[m]])
+    })
+    names(prof) <- motifs
+    prof
+})
+names(expected) <- groups
+```
+
+`accFootprintData()` stacks the insertions on the centre of every
+binding site and returns the observed and expected curves of both
+groups.
+
+```{r profiles}
+profiles <- lapply(motifs, function(m) {
+    e <- lapply(groups, function(g) expected[[g]][[m]])
+    names(e) <- groups
+    accFootprintData(tfbs[[m]], ins, e)
+})
+names(profiles) <- motifs
+head(profiles[["CTCF"]])
+```
+
+The deviation score reads that curve as one number, the insertion
+density of the central window over the density of the outer flanks,
+minus the same ratio on the expected curve. A value below zero means the
+centre is more protected than the sequence composition predicts.
+
+```{r deviations}
+vapply(profiles, function(df) {
+    df[group == "TCD8naive", accDeviation(.SD),
+        .SDcols = c("x", "avg_ins", "type")]
+}, numeric(1))
+```
+
+```{r panels, fig.width = 10, fig.height = 8}
+colours <- c(TCD8naive = "#3B6EA5", TCD8EM = "#B23A48")
+plotAccFootprintGrid(profiles, tfbs, colours, corrected = "GC corrected")
+```
+
+CTCF is the control to look at first: it binds stably, so its footprint
+is deep and the corrected curve dips well below one. AP-1 is the
+opposite case, a factor with a short residence time whose footprint
+stays shallow even where it is active.
+
+# The k-mer model
+
+Tn5 prefers some short sequences over others, and a motif is a fixed
+string of letters in the centre of every window, so part of any dip is
+chemistry rather than protein. `computeKmerBias()` measures that
+preference from the cuts themselves and `kmerBiasProfile()` turns it
+into an expected curve. It needs the genome sequence.
+
+```{r kmer, eval = FALSE}
+library(BSgenome.Hsapiens.UCSC.hg38)
+genome <- BSgenome.Hsapiens.UCSC.hg38
+
+bg <- kmerBackground(peaks, genome, k = 6L)
+bias <- lapply(ins, computeKmerBias,
+    regions = peaks, genome = genome, k = 6L, bg = bg
+)
+expectedK <- lapply(groups, function(g) {
+    prof <- lapply(motifs, function(m) {
+        kmerBiasProfile(tfbs[[m]], genome, bias[[g]], k = 6L)
+    })
+    names(prof) <- motifs
+    prof
+})
+names(expectedK) <- groups
+```
+
+Comparing the two models on the same motif is the honest check: a dip
+that survives the k-mer correction is a footprint, one that flattens was
+Tn5 preferring the flanking sequence.
+
+```{r cleanup, include = FALSE}
+unlink(cache, recursive = TRUE)
+```
+
+# Session info
+
+```{r session, eval = TRUE}
+sessionInfo()
+```

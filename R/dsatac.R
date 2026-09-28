@@ -121,14 +121,14 @@ getAccRegions <- function(dsa, regionType = "peaks", extend = 500) {
 #' @return A \code{GRanges} of single base insertion sites.
 #' @examples
 #' \dontrun{
-#' ins <- getInsertionSites(dsa, "sample_1", regions = peaks)
+#' ins <- getTn5Insertions(dsa, "sample_1", regions = peaks)
 #' }
 #' @importFrom GenomicRanges GRanges seqnames start end
 #' @importFrom IRanges IRanges subsetByOverlaps
 #' @importFrom logger log_info
 #' @import data.table
 #' @export
-getInsertionSites <- function(
+getTn5Insertions <- function(
     dsa, sampleId, regions = NULL, shift = c(4L, -5L), normalize = TRUE
 ) {
     .requireChrAccR()
@@ -220,7 +220,7 @@ makeInsertionReader <- function(
     dsa, sampleIds, regions = NULL, shift = c(4L, -5L), normalize = TRUE
 ) {
     function(i) {
-        getInsertionSites(dsa, sampleIds[i],
+        getTn5Insertions(dsa, sampleIds[i],
             regions = regions, shift = shift, normalize = normalize
         )
     }

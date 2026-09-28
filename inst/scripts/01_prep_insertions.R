@@ -48,7 +48,7 @@ tags <- gsub("[^A-Za-z0-9_.-]", "_", samples)
 sample.files <- file.path(out.dir, paste0("ins_", tags, ".RDS"))
 for (i in seq_along(samples)) {
   if (file.exists(sample.files[i])) next
-  saveRDS(getInsertionSites(dsa, samples[i],
+  saveRDS(getTn5Insertions(dsa, samples[i],
     regions = regions, shift = tn5.shift, normalize = TRUE
   ), sample.files[i])
   gc()

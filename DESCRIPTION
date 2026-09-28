@@ -43,6 +43,7 @@ Suggests:
     BiocStyle,
     BSgenome.Hsapiens.UCSC.hg38,
     ChrAccR,
+    ChrAccRex,
     knitr,
     methylTFRAnnotationHg38,
     rmarkdown,
