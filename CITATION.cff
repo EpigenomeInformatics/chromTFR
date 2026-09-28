@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: "chromTFR: Quantification of Chromatin Accessibility Signatures in Transcription Factor Binding Sites"
+abstract: >-
+  chromTFR quantifies transcription factor footprints in chromatin
+  accessibility data using the annotation of the methylTFR package. Tn5
+  insertion densities replace methylation levels, and the expected
+  profile of a motif is derived either from the GC bin composition of
+  its binding sites or from a k-mer model of the Tn5 sequence
+  preference.
+type: software
+authors:
+  - given-names: Irem B.
+    family-names: Gunduz
+    email: irembgunduz@gmail.com
+    orcid: https://orcid.org/0000-0003-2641-0916
+  - given-names: Fabian
+    family-names: Muller
+    email: fabian.mueller@uni-saarland.de
+    orcid: https://orcid.org/0000-0001-5809-2321
+version: 0.99.0
+date-released: "2026-09-28"
+license: MIT
+repository-code: https://github.com/EpigenomeInformatics/chromTFR
+keywords:
+  - ATAC-seq
+  - transcription factor footprint
+  - chromatin accessibility
+  - Tn5 bias

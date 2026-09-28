@@ -1,0 +1,18 @@
+citHeader("To cite chromTFR in publications use:")
+
+meta <- utils::packageDescription("chromTFR")
+year <- if (!is.null(meta$Date)) sub("-.*", "", meta$Date) else "2026"
+vers <- paste("R package version", meta$Version)
+
+bibentry(
+    bibtype = "Manual",
+    title = paste("chromTFR: Quantification of Chromatin Accessibility",
+        "Signatures in Transcription Factor Binding Sites"),
+    author = c(
+        person("Irem B.", "Gunduz"),
+        person("Fabian", "Muller")
+    ),
+    year = year,
+    note = vers,
+    url = "https://github.com/EpigenomeInformatics/chromTFR"
+)

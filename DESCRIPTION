@@ -2,9 +2,12 @@ Package: chromTFR
 Title: Quantification of Chromatin Accessibility Signatures in TFBS
 Version: 0.99.0
 Date: 2026-09-28
-Authors@R: 
+Authors@R: c(
     person("Irem B.", "Gunduz", , "irembgunduz@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0003-2641-0916"))
+           comment = c(ORCID = "0000-0003-2641-0916")),
+    person("Fabian", "Muller", , "fabian.mueller@uni-saarland.de", role = "aut",
+           comment = c(ORCID = "0000-0001-5809-2321"))
+  )
 Description: chromTFR quantifies transcription factor footprints in
     chromatin accessibility data using the annotation of the methylTFR
     package. Tn5 insertion densities replace methylation levels, and the

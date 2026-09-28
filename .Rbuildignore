@@ -3,3 +3,4 @@
 ^\.github$
 ^\.git$
 ^README\.Rmd$
+^CITATION\.cff$

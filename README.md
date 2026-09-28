@@ -34,6 +34,12 @@ ins <- getInsertionSites(dsa, getAccSamples(dsa)[1], regions = peaks)
 accDeviationScore(accProfile(ins, prepareTFBS(tf_bindsites[["CTCF"]])))
 ```
 
+## Citation
+
+```r
+citation("chromTFR")
+```
+
 See the vignette for the full workflow, and
 `system.file("scripts", package = "chromTFR")` for the analysis scripts
 of the malaria cohorts.
