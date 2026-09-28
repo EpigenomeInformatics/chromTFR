@@ -14,7 +14,8 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 haveData <- all(vapply(
-    c("ChrAccR", "ChrAccRex", "methylTFRAnnotationHg38"),
+    c("ChrAccR", "ChrAccRex", "methylTFRAnnotationHg38",
+        "BSgenome.Hsapiens.UCSC.hg38"),
     requireNamespace, logical(1), quietly = TRUE
 ))
 knitr::opts_chunk$set(eval = haveData)
@@ -35,6 +36,7 @@ remotes::install_github("EpigenomeInformatics/ChrAccRex")
 library(chromTFR)
 library(data.table)
 library(ggplot2)
+library(BSgenome.Hsapiens.UCSC.hg38)
 
 dsa <- ChrAccRex::loadExample("dsAtac_ia_example")
 ann <- getAccSampleAnnotation(dsa)
@@ -94,7 +96,7 @@ names(ins) <- groups
 ins[["TCD8naive"]]
 ```
 
-# Footprints
+# Binding sites
 
 The annotation comes from `methylTFRAnnotationHg38`, unchanged from
 `methylTFR`. `prepareTFBS()` resizes the binding sites to the footprint
@@ -105,23 +107,50 @@ motifs <- c("CTCF", "FOS::JUN")
 tf_bindsites <- methylTFRAnnotationHg38::getTFbindsites(
     motifSet = "jaspar2020"
 )
-gcfreqs <- methylTFRAnnotationHg38::getGCfreq(motifSet = "jaspar2020")
-gc_dist <- methylTFRAnnotationHg38::getGenomeGC()
 
 tfbs <- lapply(motifs, function(m) prepareTFBS(tf_bindsites[[m]]))
 names(tfbs) <- motifs
 lengths(tfbs)
 ```
 
-The expected profile is the GC model here: the insertion density of the
-sample summarised per GC bin, combined with the GC composition of the
-binding sites.
+# The Tn5 k-mer model
+
+Tn5 prefers some short sequences over others, and a motif is a fixed
+string of letters in the centre of every window, so part of any dip is
+chemistry rather than protein. The expected profile here measures that
+preference from the cuts themselves.
+
+`kmerBackground()` counts every 6-mer of the accessible genome. It
+depends on the regions only, so it is computed once and reused for both
+groups.
+
+```{r background}
+genome <- BSgenome.Hsapiens.UCSC.hg38
+kmer <- 6L
+bg <- kmerBackground(peaks, genome, k = kmer)
+```
+
+`computeKmerBias()` compares the 6-mer at each observed cut with that
+background. A weight above one means Tn5 cuts that word more often than
+its abundance predicts.
+
+```{r bias}
+bias <- lapply(ins, computeKmerBias,
+    regions = peaks, genome = genome, k = kmer, bg = bg, max.ins = 5e5
+)
+summary(bias[["TCD8naive"]])
+```
+
+`kmerBiasProfile()` walks along the binding sites, reads the genomic
+6-mer at each position and averages its weight across sites. That curve
+is what the insertions would look like with no protein bound.
 
 ```{r expected}
-binIns <- lapply(ins, addGCBintoAccessome, gcdist = gc_dist)
 expected <- lapply(groups, function(g) {
     prof <- lapply(motifs, function(m) {
-        computeAccExpectations(binIns[[g]], gcfreqs[[m]])
+        kmerBiasProfile(tfbs[[m]], genome, bias[[g]],
+            k = kmer, max.sites = 5000
+        )
     })
     names(prof) <- motifs
     prof
@@ -129,9 +158,10 @@ expected <- lapply(groups, function(g) {
 names(expected) <- groups
 ```
 
+# Footprints
+
 `accFootprintData()` stacks the insertions on the centre of every
-binding site and returns the observed and expected curves of both
-groups.
+binding site and matches the expected curve to the observed flanks.
 
 ```{r profiles}
 profiles <- lapply(motifs, function(m) {
@@ -146,7 +176,7 @@ head(profiles[["CTCF"]])
 The deviation score reads that curve as one number, the insertion
 density of the central window over the density of the outer flanks,
 minus the same ratio on the expected curve. A value below zero means the
-centre is more protected than the sequence composition predicts.
+centre is more protected than the sequence alone predicts.
 
 ```{r deviations}
 vapply(profiles, function(df) {
@@ -157,7 +187,9 @@ vapply(profiles, function(df) {
 
 ```{r panels, fig.width = 10, fig.height = 8}
 colours <- c(TCD8naive = "#3B6EA5", TCD8EM = "#B23A48")
-plotAccFootprintGrid(profiles, tfbs, colours, corrected = "GC corrected")
+plotAccFootprintGrid(profiles, tfbs, colours,
+    corrected = "k-mer corrected"
+)
 ```
 
 CTCF is the control to look at first: it binds stably, so its footprint
@@ -165,35 +197,11 @@ is deep and the corrected curve dips well below one. AP-1 is the
 opposite case, a factor with a short residence time whose footprint
 stays shallow even where it is active.
 
-# The k-mer model
-
-Tn5 prefers some short sequences over others, and a motif is a fixed
-string of letters in the centre of every window, so part of any dip is
-chemistry rather than protein. `computeKmerBias()` measures that
-preference from the cuts themselves and `kmerBiasProfile()` turns it
-into an expected curve. It needs the genome sequence.
-
-```{r kmer, eval = FALSE}
-library(BSgenome.Hsapiens.UCSC.hg38)
-genome <- BSgenome.Hsapiens.UCSC.hg38
-
-bg <- kmerBackground(peaks, genome, k = 6L)
-bias <- lapply(ins, computeKmerBias,
-    regions = peaks, genome = genome, k = 6L, bg = bg
-)
-expectedK <- lapply(groups, function(g) {
-    prof <- lapply(motifs, function(m) {
-        kmerBiasProfile(tfbs[[m]], genome, bias[[g]], k = 6L)
-    })
-    names(prof) <- motifs
-    prof
-})
-names(expectedK) <- groups
-```
-
-Comparing the two models on the same motif is the honest check: a dip
-that survives the k-mer correction is a footprint, one that flattens was
-Tn5 preferring the flanking sequence.
+A GC based expected profile is available as well, through
+`addGCBintoAccessome()` and `computeAccExpectations()`, and needs no
+genome sequence. Comparing the two on the same motif is a useful check:
+a dip that survives the k-mer correction is a footprint, one that
+flattens was Tn5 preferring the flanking sequence.
 
 ```{r cleanup, include = FALSE}
 unlink(cache, recursive = TRUE)
